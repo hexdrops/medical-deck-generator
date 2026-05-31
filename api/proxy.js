@@ -2,13 +2,16 @@ module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Diagnostic — visit /api/proxy in browser to check if key is loaded
+  // Diagnostic
   if (req.method === "GET") {
     const KEY = process.env.ANTHROPIC_API_KEY || "";
+    const allVarNames = Object.keys(process.env)
+      .filter(k => !k.startsWith("npm_"))
+      .sort();
     return res.status(200).json({
       keyFound: KEY.length > 0,
       keyStartsWith: KEY.length > 0 ? KEY.substring(0, 7) + "..." : "NOT SET",
-      keyLength: KEY.length
+      allVariableNames: allVarNames
     });
   }
 
