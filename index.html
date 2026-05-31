@@ -126,7 +126,7 @@
   </header>
 
   <h1 class="title">Build a <em>medical</em><br>presentation in one click.</h1>
-  <p class="sub">Runs entirely in your browser using your Anthropic API. Enter a title, optionally steer the content with keywords, pick a palette, and generate a structured, slide-ready deck — exportable to PowerPoint or PDF.</p>
+  <p class="sub">Runs entirely in your browser using your own Anthropic API key. Enter a title, optionally steer the content with keywords, pick a palette, and generate a structured, slide-ready deck — exportable to PowerPoint or PDF.</p>
 
   <!-- ===== SETUP ===== -->
   <div class="panel" id="setup">
@@ -233,7 +233,7 @@ Object.entries(THEMES).forEach(([k,t])=>{
 /* PROXY_URL: leave "" to call Anthropic directly from the browser using a key
    pasted below (local/personal use only). To deploy safely, run server.js and
    set this to "/api" — the key then lives on the server, not in the browser. */
-const PROXY_URL="/.netlify/functions/api";
+const PROXY_URL="/api/proxy";
 let API_KEY="";
 let MODEL="claude-sonnet-4-6";
 async function callClaude(system, user){
