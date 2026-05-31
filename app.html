@@ -1,0 +1,500 @@
+<!-- Medical Presentation Generator — powered by Claude -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clinical Deck — Medical Presentation Generator</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+  :root{
+    --paper:#f3efe6; --ink:#191e1c; --ink-soft:#4a534f;
+    --line:#d8d2c4; --teal:#0e6b60; --teal-deep:#0a4d45;
+    --amber:#c2742a; --card:#fbf9f4;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"IBM Plex Sans",sans-serif; line-height:1.5;
+    background-image:
+      radial-gradient(circle at 12% 18%, rgba(14,107,96,.06), transparent 40%),
+      radial-gradient(circle at 88% 88%, rgba(194,116,42,.06), transparent 45%);
+    min-height:100vh;
+  }
+  .grain{position:fixed;inset:0;pointer-events:none;opacity:.04;z-index:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:42px 28px 80px}
+
+  header.top{display:flex;align-items:baseline;gap:16px;border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:8px}
+  .mark{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal-deep);
+    border:1.5px solid var(--teal-deep);border-radius:3px;padding:4px 9px}
+  .mark .plus{color:var(--amber)}
+  h1.title{font-family:"Fraunces",serif;font-weight:900;font-size:clamp(34px,6vw,62px);line-height:.96;margin:18px 0 6px;letter-spacing:-.01em}
+  h1.title em{font-style:italic;color:var(--teal-deep)}
+  .sub{font-size:16px;color:var(--ink-soft);max-width:60ch;margin-bottom:30px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 26px 30px;
+    box-shadow:0 1px 0 #fff inset, 0 22px 40px -34px rgba(10,77,69,.4)}
+  .fld{margin-bottom:22px}
+  label.lbl{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;letter-spacing:.01em;margin-bottom:8px}
+  label.lbl .req{color:var(--amber);font-family:"IBM Plex Mono",monospace;font-size:11px}
+  label.lbl .opt{color:var(--ink-soft);font-weight:400;font-size:12px}
+  input[type=text],textarea,select{
+    width:100%;font-family:inherit;font-size:15px;color:var(--ink);background:#fff;
+    border:1.5px solid var(--line);border-radius:9px;padding:13px 14px;transition:border-color .15s,box-shadow .15s}
+  textarea{resize:vertical;min-height:78px}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(14,107,96,.13)}
+
+  .row{display:flex;gap:18px;flex-wrap:wrap}
+  .row>.fld{flex:1;min-width:200px}
+
+  .themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .swatch{cursor:pointer;border:1.5px solid var(--line);border-radius:11px;padding:12px;background:#fff;transition:.15s;position:relative}
+  .swatch:hover{transform:translateY(-2px)}
+  .swatch.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+  .swatch .bars{display:flex;height:34px;border-radius:7px;overflow:hidden;margin-bottom:9px}
+  .swatch .bars span{flex:1}
+  .swatch .nm{font-size:13px;font-weight:600}
+  .swatch .on-dot{position:absolute;top:8px;right:8px;width:16px;height:16px;border-radius:50%;background:var(--ink);color:#fff;
+    font-size:11px;display:none;align-items:center;justify-content:center}
+  .swatch.on .on-dot{display:flex}
+
+  .cta{margin-top:6px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  button.go{font-family:inherit;font-weight:700;font-size:16px;color:#fff;background:var(--teal-deep);
+    border:none;border-radius:10px;padding:15px 30px;cursor:pointer;letter-spacing:.01em;
+    box-shadow:0 10px 22px -12px rgba(10,77,69,.8);transition:.15s}
+  button.go:hover:not(:disabled){background:var(--teal);transform:translateY(-1px)}
+  button.go:disabled{opacity:.55;cursor:not-allowed}
+  .disclaimer{font-size:12.5px;color:var(--ink-soft);display:flex;gap:8px;align-items:flex-start;max-width:42ch}
+  .disclaimer b{color:var(--amber)}
+
+  /* progress */
+  .prog{display:none;margin-top:26px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px}
+  .prog.on{display:block}
+  .bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:14px 0}
+  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal-deep),var(--amber));transition:width .5s ease}
+  .steps{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink-soft)}
+  .steps .now{color:var(--teal-deep);font-weight:700}
+  .err{display:none;margin-top:20px;background:#fdeee6;border:1px solid #e7b48c;border-radius:12px;padding:16px 18px;color:#8a4516;font-size:14px}
+  .err.on{display:block}
+  .err button{margin-top:10px;font-family:inherit;background:#8a4516;color:#fff;border:none;border-radius:7px;padding:8px 16px;cursor:pointer}
+
+  /* results */
+  .results{display:none;margin-top:8px}
+  .results.on{display:block}
+  .resbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin:10px 0 22px}
+  .resbar .meta{font-size:14px;color:var(--ink-soft)}
+  .resbar .acts{display:flex;gap:10px;flex-wrap:wrap}
+  .resbar button{font-family:inherit;font-weight:600;font-size:14px;border-radius:9px;padding:11px 18px;cursor:pointer;border:1.5px solid var(--ink)}
+  .btn-ppt{background:var(--ink);color:#fff}
+  .btn-pdf{background:#fff;color:var(--ink)}
+  .btn-new{background:transparent;color:var(--ink-soft);border-color:var(--line)}
+  .resbar button:hover{transform:translateY(-1px)}
+
+  .deck{display:grid;gap:20px}
+  .slide{aspect-ratio:16/9;border-radius:12px;overflow:hidden;position:relative;box-shadow:0 16px 34px -26px rgba(0,0,0,.5);
+    border:1px solid rgba(0,0,0,.08);padding:5.5% 6.5%;display:flex;flex-direction:column}
+  .slide .snum{position:absolute;bottom:3.6%;right:5%;font-family:"IBM Plex Mono",monospace;font-size:1.4vw}
+  .slide .foot{position:absolute;bottom:3.6%;left:6.5%;font-size:1vw;opacity:.7}
+  .slide h3{font-family:"Fraunces",serif;font-weight:600;font-size:2.5vw;margin:0 0 2.4%;line-height:1.06}
+  .slide ul{margin:0;padding-left:1.1em;font-size:1.55vw;line-height:1.5}
+  .slide ul li{margin-bottom:1.4%}
+  .slide.title{align-items:flex-start;justify-content:center}
+  .slide.title h2{font-family:"Fraunces",serif;font-weight:900;font-size:4.2vw;line-height:1;margin:0 0 2.5%}
+  .slide.title .ssub{font-size:1.9vw;opacity:.85;max-width:80%}
+  .slide.title .kicker{font-family:"IBM Plex Mono",monospace;font-size:1.2vw;letter-spacing:.2em;text-transform:uppercase;margin-bottom:3%}
+  .slide .accent{position:absolute;left:0;top:0;bottom:0;width:1.6%}
+  @media(min-width:760px){
+    .slide h3{font-size:30px}.slide ul{font-size:18px}.slide .snum{font-size:13px}.slide .foot{font-size:11px}
+    .slide.title h2{font-size:46px}.slide.title .ssub{font-size:20px}.slide.title .kicker{font-size:12px}
+  }
+  .notes{font-size:12.5px;color:var(--ink-soft);padding:6px 4px 2px;border-top:1px dashed var(--line);margin-top:10px}
+  .notes b{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-deep)}
+  .footer-note{margin-top:46px;font-size:12px;color:var(--ink-soft);text-align:center;border-top:1px solid var(--line);padding-top:18px}
+</style>
+
+<div class="grain"></div>
+<div class="wrap">
+  <header class="top">
+    <span class="mark">Clinical Deck <span class="plus">+</span></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--ink-soft)">AI&nbsp;PRESENTATION&nbsp;BUILDER</span>
+  </header>
+
+  <h1 class="title">Build a <em>medical</em><br>presentation in one click.</h1>
+  <p class="sub">Runs entirely in your browser using your own Anthropic API key. Enter a title, optionally steer the content with keywords, pick a palette, and generate a structured, slide-ready deck — exportable to PowerPoint or PDF.</p>
+
+  <!-- ===== SETUP ===== -->
+  <div class="panel" id="setup">
+    <div class="fld">
+      <label class="lbl" for="f-title">Presentation title <span class="req">REQUIRED</span></label>
+      <input type="text" id="f-title" placeholder="e.g. Management of Acute Ischemic Stroke" autocomplete="off">
+    </div>
+
+    <div class="fld">
+      <label class="lbl" for="f-kw">Keywords / specific topics to include <span class="opt">— optional</span></label>
+      <textarea id="f-kw" placeholder="e.g. thrombolysis window, tPA contraindications, thrombectomy criteria, NIHSS scoring, post-stroke care"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="fld">
+        <label class="lbl" for="f-count">Number of slides</label>
+        <select id="f-count">
+          <option value="15" selected>15 slides</option>
+          <option value="18">18 slides</option>
+          <option value="20">20 slides</option>
+          <option value="24">24 slides</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label class="lbl" for="f-aud">Audience level</label>
+        <select id="f-aud">
+          <option value="practicing clinicians and physicians">Clinicians / physicians</option>
+          <option value="medical students and residents" selected>Medical students / residents</option>
+          <option value="allied health and nursing staff">Nursing / allied health</option>
+          <option value="a general / patient-facing audience">General / patient education</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="fld">
+      <label class="lbl">Theme &amp; colour scheme</label>
+      <div class="themes" id="themes"></div>
+    </div>
+
+    <div class="cta">
+      <button class="go" id="generate">Generate presentation →</button>
+      <p class="disclaimer"><span>⚠</span><span><b>Clinical accuracy:</b> output is an AI-generated draft. Verify all content against current guidelines before clinical or teaching use.</span></p>
+    </div>
+  </div>
+
+  <!-- ===== PROGRESS ===== -->
+  <div class="prog" id="prog">
+    <div class="steps"><span class="now" id="step-now">Preparing…</span></div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="steps" id="step-sub" style="font-size:12px"></div>
+  </div>
+
+  <div class="err" id="err">
+    <div id="err-msg"></div>
+    <button id="retry">Try again</button>
+  </div>
+
+  <!-- ===== RESULTS ===== -->
+  <div class="results" id="results">
+    <div class="resbar">
+      <div class="meta" id="res-meta"></div>
+      <div class="acts">
+        <button class="btn-ppt" id="dl-ppt">↓ PowerPoint (.pptx)</button>
+        <button class="btn-pdf" id="dl-pdf">↓ PDF</button>
+        <button class="btn-new" id="restart">New deck</button>
+      </div>
+    </div>
+    <div class="deck" id="deck"></div>
+  </div>
+
+  <p class="footer-note">Runs locally in your browser · Powered by the Anthropic API · Always review medical content with a qualified professional before use.</p>
+</div>
+
+<script>
+/* ---------- THEMES ---------- */
+const THEMES = {
+  clinical:  {name:"Clinical Blue",  primary:"#13476b", secondary:"#2f7fb5", accent:"#e0b341", bg:"#ffffff", text:"#16222b", titleText:"#ffffff", titleBg:"#13476b"},
+  emerald:   {name:"Emerald Care",   primary:"#0f6e4f", secondary:"#3fa17a", accent:"#d98324", bg:"#ffffff", text:"#13261f", titleText:"#ffffff", titleBg:"#0f6e4f"},
+  crimson:   {name:"Cardio Crimson", primary:"#7a1f2b", secondary:"#b04250", accent:"#c8973f", bg:"#fffafa", text:"#2a1416", titleText:"#ffffff", titleBg:"#7a1f2b"},
+  slate:     {name:"Slate Pro",      primary:"#2b3a42", secondary:"#4f6b76", accent:"#2aa39a", bg:"#ffffff", text:"#1d262b", titleText:"#ffffff", titleBg:"#2b3a42"},
+  teal:      {name:"Modern Teal",    primary:"#0c5c5c", secondary:"#2f9b97", accent:"#e8714b", bg:"#fcfefe", text:"#102525", titleText:"#ffffff", titleBg:"#0c5c5c"},
+  plum:      {name:"Academic Plum",  primary:"#43285f", secondary:"#7a5aa3", accent:"#d6a93b", bg:"#fffdff", text:"#221530", titleText:"#ffffff", titleBg:"#43285f"},
+};
+let activeTheme = "clinical";
+
+const themesEl = document.getElementById("themes");
+Object.entries(THEMES).forEach(([k,t])=>{
+  const d=document.createElement("div");
+  d.className="swatch"+(k===activeTheme?" on":"");
+  d.dataset.k=k;
+  d.innerHTML=`<div class="bars"><span style="background:${t.primary}"></span><span style="background:${t.secondary}"></span><span style="background:${t.accent}"></span></div><div class="nm">${t.name}</div><div class="on-dot">✓</div>`;
+  d.onclick=()=>{activeTheme=k;document.querySelectorAll(".swatch").forEach(s=>s.classList.toggle("on",s.dataset.k===k));};
+  themesEl.appendChild(d);
+});
+
+/* ---------- API ---------- */
+/* PROXY_URL: leave "" to call Anthropic directly from the browser using a key
+   pasted below (local/personal use only). To deploy safely, run server.js and
+   set this to "/api" — the key then lives on the server, not in the browser. */
+const PROXY_URL="/.netlify/functions/api";
+let API_KEY="";
+let MODEL="claude-sonnet-4-6";
+async function callClaude(system, user){
+  const body=JSON.stringify({model:MODEL,max_tokens:2000,system,messages:[{role:"user",content:user}]});
+  let res;
+  if(PROXY_URL){
+    res=await fetch(PROXY_URL,{method:"POST",headers:{"content-type":"application/json"},body});
+  }else{
+    if(!API_KEY) throw new Error("No API key set");
+    res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{
+        "content-type":"application/json",
+        "x-api-key":API_KEY,
+        "anthropic-version":"2023-06-01",
+        "anthropic-dangerous-direct-browser-access":"true"
+      },
+      body
+    });
+  }
+  if(!res.ok){
+    let detail="";
+    try{ const j=await res.json(); detail=(j.error&&j.error.message)||""; }catch(_){}
+    if(res.status===401) detail=detail||"Check that your API key is correct.";
+    throw new Error("API "+res.status+(detail?" — "+detail:""));
+  }
+  const data = await res.json();
+  return (data.content||[]).map(b=>b.type==="text"?b.text:"").join("\n").trim();
+}
+function extractJSON(txt){
+  let s = txt.replace(/```json/gi,"").replace(/```/g,"").trim();
+  const a=s.indexOf("{"), b=s.lastIndexOf("}");
+  if(a>=0&&b>=0) s=s.slice(a,b+1);
+  return JSON.parse(s);
+}
+
+/* ---------- GENERATION ---------- */
+let DECK=null; // {title, subtitle, theme, slides:[{type,title,bullets,notes}]}
+
+async function generateOutline(title,kw,aud,n){
+  const content = n-1; // slide 1 is the title slide
+  const sys="You are an expert medical educator and presentation designer. You produce accurate, evidence-based, logically structured content for clinical presentations. Output ONLY valid JSON — no markdown, no code fences, no commentary.";
+  const usr=
+`Create the slide outline for a medical presentation.
+Title: "${title}"
+${kw?`Specific topics/keywords that MUST be incorporated: ${kw}`:""}
+Audience: ${aud}
+Produce EXACTLY ${content} content slides (the opening title slide is separate and not counted here).
+
+Return JSON in this exact shape:
+{"subtitle":"a concise subtitle for the title slide",
+ "slides":[{"type":"agenda|content|summary|references","title":"Slide title","focus":"one sentence on what this slide covers"}]}
+
+Rules:
+- "slides" must contain EXACTLY ${content} entries.
+- First entry: type "agenda" (learning objectives / outline).
+- Follow a sound clinical flow adapted to the topic: background/epidemiology, etiology/pathophysiology, clinical presentation, diagnosis & workup, management/treatment, complications, prognosis, recent guidelines/advances.
+- Second-to-last entry: type "summary" (key takeaways).
+- Last entry: type "references".
+- Be specific to the medical topic and weave in the keywords. No generic filler.`;
+  const o=extractJSON(await callClaude(sys,usr));
+  return o;
+}
+
+async function generateBatch(title,aud,outlineTitles,batch){
+  const sys="You are an expert medical educator. Produce accurate, concise, evidence-based slide content. Output ONLY valid JSON, no markdown or commentary. Bullets must be short (max ~14 words). Do not invent citations; for references use real guideline/source names and imply they must be verified.";
+  const usr=
+`Presentation: "${title}". Audience: ${aud}.
+Outline for context: ${outlineTitles}
+
+Write detailed content ONLY for these slides:
+${batch.map(s=>`#${s.idx} [${s.type}] ${s.title} — ${s.focus}`).join("\n")}
+
+Return JSON: {"slides":[{"idx":<number>,"bullets":["..."],"notes":"1-2 sentence speaker note"}]}
+Rules:
+- 3 to 6 concise, clinically accurate bullets per slide.
+- For a "references" slide, bullets are 4-7 source/guideline names.
+- No markdown, no code fences.`;
+  return extractJSON(await callClaude(sys,usr)).slides||[];
+}
+
+function setProg(pct,now,sub){
+  document.getElementById("bar").style.width=pct+"%";
+  if(now) document.getElementById("step-now").textContent=now;
+  document.getElementById("step-sub").textContent=sub||"";
+}
+
+async function run(){
+  MODEL=document.getElementById("f-model").value;
+  const title=document.getElementById("f-title").value.trim();
+  if(!title){ document.getElementById("f-title").focus(); document.getElementById("f-title").style.borderColor="#c2742a"; return; }
+  const kw=document.getElementById("f-kw").value.trim();
+  const n=parseInt(document.getElementById("f-count").value,10);
+  const aud=document.getElementById("f-aud").value;
+  const theme=THEMES[activeTheme];
+
+  document.getElementById("setup").style.opacity=".5";
+  document.getElementById("generate").disabled=true;
+  document.getElementById("err").classList.remove("on");
+  document.getElementById("results").classList.remove("on");
+  document.getElementById("prog").classList.add("on");
+
+  try{
+    setProg(10,"Designing the slide structure…","Building a clinical narrative for your topic");
+    const outline=await generateOutline(title,kw,aud,n);
+    let specs=(outline.slides||[]).map((s,i)=>({idx:i+2,type:s.type||"content",title:s.title,focus:s.focus||""}));
+    // defensive: ensure references slide exists at end
+    if(!specs.some(s=>s.type==="references")&&specs.length) specs[specs.length-1].type="references";
+
+    const outlineTitles=specs.map(s=>`#${s.idx} ${s.title}`).join(" | ");
+    const built={};
+    const BATCH=4;
+    const batches=[];
+    for(let i=0;i<specs.length;i+=BATCH) batches.push(specs.slice(i,i+BATCH));
+
+    for(let b=0;b<batches.length;b++){
+      setProg(20+Math.round((b/batches.length)*70),"Writing slide content…",`Section ${b+1} of ${batches.length}`);
+      const rows=await generateBatch(title,aud,outlineTitles,batches[b]);
+      rows.forEach(r=>{ built[r.idx]={bullets:r.bullets||[],notes:r.notes||""}; });
+    }
+
+    setProg(95,"Assembling your deck…","");
+    const slides=[{type:"title",title,subtitle:outline.subtitle||aud,bullets:[],notes:""}];
+    specs.forEach(s=>{
+      const c=built[s.idx]||{bullets:["(content unavailable — regenerate)"],notes:""};
+      slides.push({type:s.type,title:s.title,bullets:c.bullets,notes:c.notes});
+    });
+
+    DECK={title,subtitle:outline.subtitle||"",themeKey:activeTheme,slides};
+    setProg(100,"Done","");
+    renderPreview();
+    document.getElementById("prog").classList.remove("on");
+    document.getElementById("results").classList.add("on");
+    document.getElementById("res-meta").textContent=`${slides.length} slides · ${theme.name} theme · ready to download`;
+    document.getElementById("results").scrollIntoView({behavior:"smooth"});
+  }catch(e){
+    document.getElementById("prog").classList.remove("on");
+    document.getElementById("err-msg").textContent="Something went wrong while generating: "+e.message+". This is usually a temporary hiccup — please try again.";
+    document.getElementById("err").classList.add("on");
+  }finally{
+    document.getElementById("setup").style.opacity="1";
+    document.getElementById("generate").disabled=false;
+  }
+}
+
+/* ---------- PREVIEW ---------- */
+function renderPreview(){
+  const t=THEMES[DECK.themeKey];
+  const deck=document.getElementById("deck");
+  deck.innerHTML="";
+  DECK.slides.forEach((s,i)=>{
+    const card=document.createElement("div");
+    if(s.type==="title"){
+      card.className="slide title";
+      card.style.background=t.titleBg; card.style.color=t.titleText;
+      card.innerHTML=`<div class="kicker" style="color:${t.accent}">Medical Presentation</div>
+        <h2>${esc(s.title)}</h2>
+        <div class="ssub">${esc(s.subtitle)}</div>
+        <div class="accent" style="background:${t.accent}"></div>
+        <div class="foot">AI-generated draft — verify clinically</div>`;
+    }else{
+      card.className="slide";
+      card.style.background=t.bg; card.style.color=t.text;
+      const bullets=(s.bullets||[]).map(b=>`<li>${esc(b)}</li>`).join("");
+      card.innerHTML=`<div class="accent" style="background:${t.primary}"></div>
+        <h3 style="color:${t.primary}">${esc(s.title)}</h3>
+        <ul>${bullets}</ul>
+        <div class="snum" style="color:${t.secondary}">${i+1}</div>
+        <div class="foot" style="color:${t.secondary}">${esc(DECK.title)} · verify clinically</div>`;
+    }
+    deck.appendChild(card);
+    if(s.notes){
+      const nt=document.createElement("div");
+      nt.className="notes";
+      nt.innerHTML=`<b>Speaker notes</b> &nbsp; ${esc(s.notes)}`;
+      deck.appendChild(nt);
+    }
+  });
+}
+function esc(x){return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function hx(h){h=h.replace("#","");return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16)};}
+
+/* ---------- EXPORT: PPTX ---------- */
+function exportPPTX(){
+  const t=THEMES[DECK.themeKey];
+  const pptx=new PptxGenJS();
+  pptx.layout="LAYOUT_WIDE"; // 13.33 x 7.5 in
+  pptx.author="Clinical Deck"; pptx.title=DECK.title;
+  const W=13.33,H=7.5, np=t.primary.replace("#",""), ns=t.secondary.replace("#",""),
+        na=t.accent.replace("#",""), ntb=t.titleBg.replace("#",""), ntt=t.titleText.replace("#",""), ntx=t.text.replace("#","");
+
+  DECK.slides.forEach((s,i)=>{
+    const slide=pptx.addSlide();
+    if(s.type==="title"){
+      slide.background={color:ntb};
+      slide.addShape(pptx.ShapeType.rect,{x:0,y:0,w:0.28,h:H,fill:{color:na}});
+      slide.addText("MEDICAL PRESENTATION",{x:0.9,y:2.0,w:11,h:0.5,fontFace:"Arial",fontSize:14,color:na,charSpacing:3,bold:true});
+      slide.addText(s.title,{x:0.9,y:2.5,w:11.5,h:2.2,fontFace:"Georgia",fontSize:44,bold:true,color:ntt,valign:"top"});
+      slide.addText(s.subtitle||"",{x:0.9,y:4.7,w:10.5,h:1,fontFace:"Arial",fontSize:20,color:ntt,valign:"top"});
+      slide.addText("AI-generated draft — verify against current clinical guidelines before use.",{x:0.9,y:H-0.7,w:11,h:0.4,fontFace:"Arial",fontSize:11,color:na});
+    }else{
+      slide.background={color:t.bg.replace("#","")};
+      slide.addShape(pptx.ShapeType.rect,{x:0,y:0,w:0.22,h:H,fill:{color:np}});
+      slide.addText(s.title,{x:0.7,y:0.5,w:12,h:1,fontFace:"Georgia",fontSize:28,bold:true,color:np,valign:"top"});
+      slide.addShape(pptx.ShapeType.line,{x:0.72,y:1.55,w:3.2,h:0,line:{color:na,width:2}});
+      const items=(s.bullets||[]).map(b=>({text:b,options:{bullet:{indent:18},fontSize:18,color:ntx,paraSpaceAfter:9}}));
+      slide.addText(items,{x:0.72,y:1.85,w:12,h:4.9,fontFace:"Arial",valign:"top",lineSpacingMultiple:1.1});
+      slide.addText(String(i+1),{x:12.4,y:H-0.6,w:0.7,h:0.4,fontFace:"Arial",fontSize:12,color:ns,align:"right"});
+      slide.addText(DECK.title+" · verify clinically",{x:0.7,y:H-0.6,w:9,h:0.4,fontFace:"Arial",fontSize:10,color:ns});
+      if(s.notes) slide.addNotes(s.notes);
+    }
+  });
+  pptx.writeFile({fileName:fname()+".pptx"});
+}
+
+/* ---------- EXPORT: PDF ---------- */
+function exportPDF(){
+  const t=THEMES[DECK.themeKey];
+  const {jsPDF}=window.jspdf;
+  const W=960,H=540, M=60;
+  const doc=new jsPDF({orientation:"landscape",unit:"pt",format:[W,H]});
+  const setFill=(c)=>{const o=hx(c);doc.setFillColor(o.r,o.g,o.b);};
+  const setText=(c)=>{const o=hx(c);doc.setTextColor(o.r,o.g,o.b);};
+
+  DECK.slides.forEach((s,i)=>{
+    if(i>0) doc.addPage([W,H],"landscape");
+    if(s.type==="title"){
+      setFill(t.titleBg); doc.rect(0,0,W,H,"F");
+      setFill(t.accent); doc.rect(0,0,14,H,"F");
+      setText(t.accent); doc.setFont("courier","bold"); doc.setFontSize(13);
+      doc.text("MEDICAL PRESENTATION",M,150,{charSpace:2});
+      setText(t.titleText); doc.setFont("times","bold"); doc.setFontSize(40);
+      doc.text(doc.splitTextToSize(s.title,W-2*M),M,210);
+      doc.setFont("helvetica","normal"); doc.setFontSize(18);
+      doc.text(doc.splitTextToSize(s.subtitle||"",W-2*M-120),M,330);
+      setText(t.accent); doc.setFontSize(10);
+      doc.text("AI-generated draft — verify against current clinical guidelines before use.",M,H-40);
+    }else{
+      setFill(t.bg); doc.rect(0,0,W,H,"F");
+      setFill(t.primary); doc.rect(0,0,11,H,"F");
+      setText(t.primary); doc.setFont("times","bold"); doc.setFontSize(26);
+      const ht=doc.splitTextToSize(s.title,W-2*M); doc.text(ht,M,72);
+      setFill(t.accent); doc.rect(M,90+ (ht.length-1)*26,150,3,"F");
+      let y=130+(ht.length-1)*26;
+      setText(t.text); doc.setFont("helvetica","normal"); doc.setFontSize(16);
+      (s.bullets||[]).forEach(b=>{
+        const lines=doc.splitTextToSize("•  "+b,W-2*M-30);
+        if(y>H-70){return;}
+        doc.text(lines,M,y); y+=lines.length*22+6;
+      });
+      setText(t.secondary); doc.setFont("helvetica","normal"); doc.setFontSize(10);
+      doc.text(String(i+1),W-M,H-30,{align:"right"});
+      doc.text(DECK.title+" · verify clinically",M,H-30);
+    }
+  });
+  doc.save(fname()+".pdf");
+}
+function fname(){return DECK.title.replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").slice(0,50).toLowerCase()||"presentation";}
+
+/* ---------- WIRING ---------- */
+document.getElementById("generate").onclick=run;
+document.getElementById("retry").onclick=()=>{document.getElementById("err").classList.remove("on");run();};
+document.getElementById("dl-ppt").onclick=()=>{try{exportPPTX()}catch(e){alert("PPTX export error: "+e.message)}};
+document.getElementById("dl-pdf").onclick=()=>{try{exportPDF()}catch(e){alert("PDF export error: "+e.message)}};
+document.getElementById("restart").onclick=()=>{
+  document.getElementById("results").classList.remove("on");
+  window.scrollTo({top:0,behavior:"smooth"});
+  document.getElementById("f-title").focus();
+};
+document.getElementById("f-title").addEventListener("input",e=>{e.target.style.borderColor="";});
+</script>
