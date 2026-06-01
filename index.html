@@ -121,6 +121,8 @@
   #pw-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
   .pw-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:52px 40px 44px;max-width:400px;width:100%;text-align:center;
     box-shadow:0 1px 0 #fff inset,0 28px 60px -34px rgba(10,77,69,.4)}
+  .pw-brand{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+  .pw-tag{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.18em;color:var(--ink-soft)}
   .pw-lock{font-size:44px;margin-bottom:18px}
   .pw-title{font-family:"Fraunces",serif;font-weight:900;font-size:34px;margin:0 0 8px;letter-spacing:-.01em}
   .pw-sub{color:var(--ink-soft);font-size:15px;margin:0 0 30px}
@@ -140,6 +142,10 @@
 <!-- ===== PASSWORD SCREEN ===== -->
 <div id="pw-screen">
   <div class="pw-card">
+    <div class="pw-brand">
+      <span class="mark">Clinical Deck <span class="plus">+</span></span>
+      <span class="pw-tag">AI&nbsp;PRESENTATION&nbsp;BUILDER</span>
+    </div>
     <div class="pw-lock">🔐</div>
     <h2 class="pw-title">Clinical Deck</h2>
     <p class="pw-sub">Enter your access password to continue.</p>
