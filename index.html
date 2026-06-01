@@ -116,9 +116,41 @@
   .notes{font-size:12.5px;color:var(--ink-soft);padding:6px 4px 2px;border-top:1px dashed var(--line);margin-top:10px}
   .notes b{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-deep)}
   .footer-note{margin-top:46px;font-size:12px;color:var(--ink-soft);text-align:center;border-top:1px solid var(--line);padding-top:18px}
+
+  /* ---- Password screen ---- */
+  #pw-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .pw-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:52px 40px 44px;max-width:400px;width:100%;text-align:center;
+    box-shadow:0 1px 0 #fff inset,0 28px 60px -34px rgba(10,77,69,.4)}
+  .pw-lock{font-size:44px;margin-bottom:18px}
+  .pw-title{font-family:"Fraunces",serif;font-weight:900;font-size:34px;margin:0 0 8px;letter-spacing:-.01em}
+  .pw-sub{color:var(--ink-soft);font-size:15px;margin:0 0 30px}
+  #pw-input{width:100%;padding:14px;border:1.5px solid var(--line);border-radius:9px;font-size:18px;font-family:"IBM Plex Mono",monospace;
+    text-align:center;letter-spacing:.2em;background:#fff;color:var(--ink);transition:.15s}
+  #pw-input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(14,107,96,.13)}
+  .pw-error{color:var(--amber);font-size:13px;min-height:22px;margin:10px 0 2px}
+  .pw-btn{width:100%;margin-top:6px;padding:15px;font-family:inherit;font-weight:700;font-size:16px;
+    background:var(--teal-deep);color:#fff;border:none;border-radius:10px;cursor:pointer;
+    box-shadow:0 10px 22px -12px rgba(10,77,69,.8);transition:.15s}
+  .pw-btn:hover:not(:disabled){background:var(--teal)}
+  .pw-btn:disabled{opacity:.55;cursor:not-allowed}
 </style>
 
 <div class="grain"></div>
+
+<!-- ===== PASSWORD SCREEN ===== -->
+<div id="pw-screen">
+  <div class="pw-card">
+    <div class="pw-lock">🔐</div>
+    <h2 class="pw-title">Clinical Deck</h2>
+    <p class="pw-sub">Enter your access password to continue.</p>
+    <input type="password" id="pw-input" placeholder="••••••••" autocomplete="off">
+    <p class="pw-error" id="pw-error"></p>
+    <button class="pw-btn" id="pw-btn">Enter →</button>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="main-app" style="display:none">
 <div class="wrap">
   <header class="top">
     <span class="mark">Clinical Deck <span class="plus">+</span></span>
@@ -199,6 +231,7 @@
 
   <p class="footer-note">Powered by the Anthropic API · Always review medical content with a qualified professional before use.</p>
 </div>
+</div><!-- end #main-app -->
 
 <script>
 /* ---------- THEMES ---------- */
@@ -229,11 +262,12 @@ Object.entries(THEMES).forEach(([k,t])=>{
 const PROXY_URL="/api/proxy";
 const MODEL="claude-sonnet-4-6";
 let API_KEY="";
+let APP_PASSWORD_TOKEN="";
 async function callClaude(system, user){
   const body=JSON.stringify({model:MODEL,max_tokens:2000,system,messages:[{role:"user",content:user}]});
   let res;
   if(PROXY_URL){
-    res=await fetch(PROXY_URL,{method:"POST",headers:{"content-type":"application/json"},body});
+    res=await fetch(PROXY_URL,{method:"POST",headers:{"content-type":"application/json","x-app-password":APP_PASSWORD_TOKEN},body});
   }else{
     if(!API_KEY) throw new Error("No API key set");
     res=await fetch("https://api.anthropic.com/v1/messages",{
@@ -496,4 +530,41 @@ document.getElementById("restart").onclick=()=>{
   document.getElementById("f-title").focus();
 };
 document.getElementById("f-title").addEventListener("input",e=>{e.target.style.borderColor="";});
+
+/* ---------- PASSWORD ---------- */
+async function verifyPassword(){
+  const pw=document.getElementById("pw-input").value.trim();
+  if(!pw){document.getElementById("pw-error").textContent="Please enter the password.";return;}
+  const btn=document.getElementById("pw-btn");
+  btn.disabled=true; btn.textContent="Checking…";
+  document.getElementById("pw-error").textContent="";
+  try{
+    const res=await fetch(PROXY_URL,{headers:{"x-app-password":pw}});
+    if(res.ok){
+      APP_PASSWORD_TOKEN=pw;
+      try{sessionStorage.setItem("app_pw",pw);}catch(_){}
+      document.getElementById("pw-screen").style.display="none";
+      document.getElementById("main-app").style.display="block";
+    }else{
+      document.getElementById("pw-error").textContent="Incorrect password. Please try again.";
+      document.getElementById("pw-input").value="";
+      document.getElementById("pw-input").focus();
+      btn.disabled=false; btn.textContent="Enter →";
+    }
+  }catch(e){
+    document.getElementById("pw-error").textContent="Connection error. Please try again.";
+    btn.disabled=false; btn.textContent="Enter →";
+  }
+}
+document.getElementById("pw-btn").addEventListener("click",verifyPassword);
+document.getElementById("pw-input").addEventListener("keydown",e=>{if(e.key==="Enter")verifyPassword();});
+
+// Auto-restore session so user doesn't re-enter password on refresh
+(async()=>{
+  try{
+    const saved=sessionStorage.getItem("app_pw");
+    if(saved){document.getElementById("pw-input").value=saved;await verifyPassword();}
+    else{document.getElementById("pw-input").focus();}
+  }catch(_){document.getElementById("pw-input").focus();}
+})();
 </script>
