@@ -93,7 +93,6 @@
   .resbar button{font-family:inherit;font-weight:600;font-size:14px;border-radius:9px;padding:11px 18px;cursor:pointer;border:1.5px solid var(--ink)}
   .btn-ppt{background:var(--ink);color:#fff}
   .btn-pdf{background:#fff;color:var(--ink)}
-  .btn-tip{background:var(--amber);color:#fff;border-color:var(--amber)}
   .btn-new{background:transparent;color:var(--ink-soft);border-color:var(--line)}
   .resbar button:hover{transform:translateY(-1px)}
 
@@ -127,7 +126,7 @@
   </header>
 
   <h1 class="title">Build a <em>medical</em><br>presentation in one click.</h1>
-  <p class="sub">Runs entirely in your browser using your own Anthropic API key. Enter a title, optionally steer the content with keywords, pick a palette, and generate a structured, slide-ready deck — exportable to PowerPoint or PDF.</p>
+  <p class="sub">Enter a title, optionally steer the content with keywords, pick a palette, and generate a structured, slide-ready deck — exportable to PowerPoint or PDF.</p>
 
   <!-- ===== SETUP ===== -->
   <div class="panel" id="setup">
@@ -192,14 +191,13 @@
       <div class="acts">
         <button class="btn-ppt" id="dl-ppt">↓ PowerPoint (.pptx)</button>
         <button class="btn-pdf" id="dl-pdf">↓ PDF</button>
-        <button class="btn-tip" id="tip-btn" onclick="window.open(TIP_URL,'_blank')">☕ Buy me a coffee</button>
         <button class="btn-new" id="restart">New deck</button>
       </div>
     </div>
     <div class="deck" id="deck"></div>
   </div>
 
-  <p class="footer-note">Runs locally in your browser · Powered by the Anthropic API · Always review medical content with a qualified professional before use.</p>
+  <p class="footer-note">Powered by the Anthropic API · Always review medical content with a qualified professional before use.</p>
 </div>
 
 <script>
@@ -230,7 +228,6 @@ Object.entries(THEMES).forEach(([k,t])=>{
    set this to "/api" — the key then lives on the server, not in the browser. */
 const PROXY_URL="/api/proxy";
 const MODEL="claude-sonnet-4-6";
-const TIP_URL="https://buymeacoffee.com/yourname"; // ← replace with your actual tip link
 let API_KEY="";
 async function callClaude(system, user){
   const body=JSON.stringify({model:MODEL,max_tokens:2000,system,messages:[{role:"user",content:user}]});
