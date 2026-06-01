@@ -1,23 +1,25 @@
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  // Diagnostic
-  if (req.method === "GET") {
-    const KEY = process.env.ANTHROPIC_API_KEY || "";
-    const allVarNames = Object.keys(process.env)
-      .filter(k => !k.startsWith("npm_"))
-      .sort();
-    return res.status(200).json({
-      keyFound: KEY.length > 0,
-      keyStartsWith: KEY.length > 0 ? KEY.substring(0, 7) + "..." : "NOT SET",
-      allVariableNames: allVarNames
-    });
-  }
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-app-password");
 
   if (req.method === "OPTIONS") { res.status(204).end(); return; }
+
+  // ── Password check ────────────────────────────────────────────────────────
+  const APP_PASSWORD = process.env.APP_PASSWORD;
+  const provided     = req.headers["x-app-password"];
+
+  if (APP_PASSWORD && provided !== APP_PASSWORD) {
+    return res.status(401).json({ error: { message: "Incorrect password." } });
+  }
+
+  // ── Verify endpoint (GET) — used by the login screen ─────────────────────
+  if (req.method === "GET") {
+    return res.status(200).json({ ok: true });
+  }
+
   if (req.method !== "POST") { res.status(405).end("Method Not Allowed"); return; }
 
+  // ── Proxy to Anthropic ────────────────────────────────────────────────────
   const KEY = process.env.ANTHROPIC_API_KEY;
   if (!KEY) {
     return res.status(500).json({ error: { message: "ANTHROPIC_API_KEY not configured on server." } });
