@@ -93,6 +93,7 @@
   .resbar button{font-family:inherit;font-weight:600;font-size:14px;border-radius:9px;padding:11px 18px;cursor:pointer;border:1.5px solid var(--ink)}
   .btn-ppt{background:var(--ink);color:#fff}
   .btn-pdf{background:#fff;color:var(--ink)}
+  .btn-tip{background:var(--amber);color:#fff;border-color:var(--amber)}
   .btn-new{background:transparent;color:var(--ink-soft);border-color:var(--line)}
   .resbar button:hover{transform:translateY(-1px)}
 
@@ -159,13 +160,6 @@
           <option value="a general / patient-facing audience">General / patient education</option>
         </select>
       </div>
-      <div class="fld">
-        <label class="lbl" for="f-model">AI model</label>
-        <select id="f-model">
-          <option value="claude-sonnet-4-6" selected>Sonnet 4.6 — best quality</option>
-          <option value="claude-haiku-4-5-20251001">Haiku 4.5 — faster &amp; cheaper</option>
-        </select>
-      </div>
     </div>
 
     <div class="fld">
@@ -198,6 +192,7 @@
       <div class="acts">
         <button class="btn-ppt" id="dl-ppt">↓ PowerPoint (.pptx)</button>
         <button class="btn-pdf" id="dl-pdf">↓ PDF</button>
+        <button class="btn-tip" id="tip-btn" onclick="window.open(TIP_URL,'_blank')">☕ Buy me a coffee</button>
         <button class="btn-new" id="restart">New deck</button>
       </div>
     </div>
@@ -234,8 +229,9 @@ Object.entries(THEMES).forEach(([k,t])=>{
    pasted below (local/personal use only). To deploy safely, run server.js and
    set this to "/api" — the key then lives on the server, not in the browser. */
 const PROXY_URL="/api/proxy";
+const MODEL="claude-sonnet-4-6";
+const TIP_URL="https://buymeacoffee.com/yourname"; // ← replace with your actual tip link
 let API_KEY="";
-let MODEL="claude-sonnet-4-6";
 async function callClaude(system, user){
   const body=JSON.stringify({model:MODEL,max_tokens:2000,system,messages:[{role:"user",content:user}]});
   let res;
@@ -322,7 +318,6 @@ function setProg(pct,now,sub){
 }
 
 async function run(){
-  MODEL=document.getElementById("f-model").value;
   const title=document.getElementById("f-title").value.trim();
   if(!title){ document.getElementById("f-title").focus(); document.getElementById("f-title").style.borderColor="#c2742a"; return; }
   const kw=document.getElementById("f-kw").value.trim();
